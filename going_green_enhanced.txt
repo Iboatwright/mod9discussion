@@ -1,0 +1,106 @@
+Lab 10.4 – Going Green and File Interaction
+-------------------------------------------
+Write the Pseudocode, Flowchart, and Python code for the following programming
+    problem from Lab 9.5.  Note that the in addition to what the program
+    already does, it should create a file called savings.txt and store the
+    savings array to a file.  This should be done in append mode in Python,
+    but not in Raptor as it is not an option.  The pseudocode is provided.
+    Write the Pseudocode, Flowchart, and Python code for the following
+    programming problem from Lab 9.5.  Note that the in addition to what the
+    program already does, it should create a file called savings.txt and store
+    the savings array to a file.
+
+The Pseudocode
+--------------
+Module main()
+	//Declare local variables
+	Declare endProgram = “no”
+	Declare Real notGreenCost[12]
+	Declare Real goneGreenCost[12]
+	Declare Real savings[12]
+    Declare String months[12] = “January”, “February”, “March”, “April”,
+                                “May”, “June”, “July”, “August”, “September”,
+                                “October”, “November”, “December”
+	Declare Integer option = 0
+
+	While endProgram == “no”
+		//function calls
+		Set option = Input "1) Enter values\n2) Display Report\n" \
+		                   "3) Save Results to File\n4) Display Saved Results"
+		If option == 1 Then
+			getNotGreen(notGreenCost, months)
+			getGoneGreen(goneGreenCost, months)
+			energySaved(notGreenCost, goneGreenCosts, savings)
+		Else If option == 2 Then
+			displayInfo(notGreenCost, goneGreenCosts, savings, months)
+		Else If option == 3 Then
+			writeToFile(months, savings)
+		Else If option == 4 Then
+			readFromFile(months, savings)
+		End If
+
+		Display “Do you want to end the program? Yes or no”
+		Input endProgram
+	End While
+End Module
+
+Module writeToFile(String months[], Real savings[])
+	Declare outFile AppendMode savingsFile
+	Open savingsFile “savings1.txt”
+	Write savingsFile “Savings”
+	Declare Integer counter = 0
+	While counter < 12
+		Write savingsFile months[counter]
+		Write savingsFile savings[counter]
+		Set counter = counter + 1
+	End While
+	Close savingsFile
+End Module
+
+Module readFromFile(String months[], Real savings[])
+	Declare inFile savingsFile
+	Open inFile “savings1.txt”
+	Read savingsFile str1
+	Display str1
+	Read savingsFile months
+	Display months
+	Read savingsFile savings
+	Display savings
+	Close inFile
+End Module
+
+Module getNotGreen(Real notGreenCost[], String months[])
+	Set counter = 0
+	While counter < 12
+		Display “Enter NOT GREEN energy costs for”, months[counter]
+		Input notGreenCosts[counter]
+		Set counter = counter + 1
+	End While
+End Module
+
+Module getGoneGreen(Real goneGreenCost[], String months[])
+	Set counter = 0
+	While counter < 12
+		Display “Enter GONE GREEN energy costs for”, months[counter]
+		Input goneGreenCosts[counter]
+		Set counter = counter + 1
+	End While
+End Module
+
+Module energySaved(Real notGreenCost[], Real goneGreenCost[], Real savings[])
+	Set counter = 0
+	While counter < 12
+		Set savings[counter] = notGreenCost[counter] – goneGreenCost[counter]
+		Set counter = counter + 1
+	End While
+End Module
+Module displayInfo(Real notGreenCost[], Real goneGreenCost[], Real savings[], String months[])
+	Set counter = 0
+	While counter < 12
+		Display “Information for”, months[counter]
+		Display “Savings $”, savings[counter]
+		Display “Not Green Costs $”, notGreenCost[counter]
+		Display “Gone Green Costs $”, goneGreenCost[counter]
+		Set counter = counter + 1
+	End While
+End Module
