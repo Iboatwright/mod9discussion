@@ -11,7 +11,7 @@
 # Ivan Boatwright
 # March 27, 2016
 
-def main(debug=False):
+def main():
     # Declare local variables/constants
     MONTHS = ('January', 'February', 'March', 'April', 'May', 'June', 'July',
               'August', 'September', 'October', 'November', 'December')
@@ -27,7 +27,8 @@ def main(debug=False):
 
     # Any custom persistant variables are added to this dictionary.
     cVars = dict(months=MONTHS, headers=HEADERS, fileName='savings.txt', report='',
-                 notGreenCost=[], goneGreenCost=[], savings=[])
+                 notGreenCost=[], goneGreenCost=[], savings=[],
+                 base_sav=[])
 
     cVars['headDesign'] = '{0:^4}{{0:>10}}{0:^6}{{1:>10}}{0:^6}{{2:>10}}' \
                           '{0:^6}{{3:<8}}\n'.format('')
@@ -37,14 +38,13 @@ def main(debug=False):
     # Displays an introduction to the program and describes what it does.
     fluffy_intro()
 
-    # Call the menu loop program.  The menu options are: 1) Average Test
-    #   Scores and 0) Exit the program.
+    # Call the menu loop program.  The menu options are stored in the
+    #   customMenuOptions variable and are numbered in the order listed.
     main_menu(customMenuOptions, cVars)
 
     # Exit main.
     return None
 
-# Section Block: Misc Output ------------------------------------------------>
 
 # Displays an introduction to the program and describes what it does.
 def fluffy_intro():
@@ -81,7 +81,7 @@ def main_menu(customMenuOptions, cVars):
 
     # While menuSelection does not equal 0 (the default exit option.)
     while menuSelection != 0:
-        display_menu(menuOptions, cVars)
+        display_menu(menuOptions)
         # Calls the input request/validation function and converts the return
         #   value into an integer.  The number of menu elements is prepended
         #   to the input request and used as part of the validation testing.
@@ -98,7 +98,7 @@ def main_menu(customMenuOptions, cVars):
 
 # Prints the menu header and menu options to stdout.  The menuOptions list
 #   is the parameter and used to generate the option strings.
-def display_menu(mOpts, cVars):
+def display_menu(mOpts):
     print(page_header('Main Menu'))
     # This loops through the list starting at [1] and prints [0] (Exit)
     #   at the end.
@@ -109,7 +109,7 @@ def display_menu(mOpts, cVars):
 
 
 # Sets the loop control variable to 0 which ends the while loop.
-def exit_menu():
+def exit_menu(_):
     # "Until we meet again, farewell."
     print("\nJusqu'à ce que nous nous reverrons, adieu.")
     return 0
@@ -185,46 +185,73 @@ def test_value(testCondition, testItem):
 
 
 
-# Option 1
+# Menu Option 1:
+#   Resets the cost related lists in cVar. It then calls the
+#   user input modules to repopulate the cost lists.  Last it calculates
+#   the energy savings and makes an unaltered copy of that list for saving
+#   to file.
 def enter_bills(cVars):
     get_not_green(cVars['notGreenCost'], cVars['months'])
     get_gone_green(cVars['goneGreenCost'], cVars['months'])
     energy_saved(cVars['notGreenCost'], cVars['goneGreenCost'],
                  cVars['savings'])
+    cVars['base_sav'] = cVars['savings'].copy()
     return None
 
-# Option 2
+
+# Option 2:
+#   Tests if costs have been input.  If so it generates a report string then
+#   displays the results.
 def display_report(cVars):
-    if len(cVars['savings']) < 12:
+    if len(cVars['savings']) < 2:
         print('\n{0}Nothing to report.  Please enter monthly energy bills.'
               '\n'.format('    '))
     else:
         report = get_report(cVars['headers'][0], cVars['headers'],
-                            cVars['hdesign'], cVars['design'],
+                            cVars['headDesign'], cVars['reportDesign'],
                             cVars['savings'], cVars['notGreenCost'],
                             cVars['goneGreenCost'], cVars['months'])
+        display_results(report)
     return None
 
-# Option 3
+
+# Option 3:
+#   Tests if costs have been input.  If so it generates a string from the
+#   unaltered copy of the savings list.  Then saves that string to the
+#   filename specified in cVars.
 def write_Savings(cVars):
-    if len(cVars['savings']) < 12:
+    if len(cVars['base_sav']) < 2:
         print('\n{0}Nothing to write.  Please enter monthly energy bills.'
               '\n'.format('    '))
     else:
-        outString = ''.join(['{}\n'.format(s) for s in cVars['savings']])
+        outString = ''.join(['{}\n'.format(s) for s in cVars['base_sav']])
         write_to_file(cVars['fileName'], outString)
     return None
 
-# Option 4
+
+# Option 4:
+#   Uses a similar design to the main report except with only the savings
+#   and month columns.  It gets the savings list stored in the filename
+#   specified in cVars.  If no data is returned from the read attempt
+#   nothing is printed here.
 def read_Savings(cVars):
     title = 'Saved Savings from Savings File'
     headers = (cVars['headers'][0], cVars['headers'][-1])
-    hdesign = '{0:^20}{{0:>10}}{0:^22}{{1:<8}}\n'.format('')
-    design = '{0:^19}{{0:>10}}{0:^20}{{1:<8}}\n'.format('')
+    hdesign = '{0:^20}{{0:>10}}{0:^10}{{1:<8}}\n'.format('')
+    design = '{0:^18}{{0:>10}}{0:^12}{{1:<8}}\n'.format('')
     data = get_from_file(cVars['fileName'])
     if len(data) > 0:
-        print(get_report(title, headers, hdesign, design, data))
+        print(get_report(title, headers, hdesign, design, data, cVars['months']))
     return None
+
+
+# Re-initializes variables to defaults.
+def reset_vars(cVars):
+    cVars['notGreenCost'] = []
+    cVars['goneGreenCost'] = []
+    cVars['savings'] = []
+    return None
+
 
 # Requests the user input the notGreenCosts.
 def get_not_green(ngc, months):
@@ -279,17 +306,18 @@ def tablefy(title, headers, hdesign, design, data):
 # get_report is an intermediary stage for generating and returning the
 #   report string.
 def get_report(title, headers, hdesign, design, *data):
-    # Using moneyfy to turn all the integer values into strings with
-    #   dollar signs.
-    moneyfy(*data[:-1])
-
+    # Using moneyfy to turn all the integer values into strings with dollar
+    #   signs.  If the values are already moneyfied this step is skipped.
+    if not '$' in str(data[0][0]):
+        moneyfy(*data[:-1])
     # tablefy returns the report as a string which is then passed back
     #   to the calling module.
     return tablefy(title, headers, hdesign, design, zip(*data))
 
 
 # This module accepts the filename as it's parameter and returns the contents
-#   of the file as a string.
+#   of the file as a string.  If the file does not exist an error message is
+#   displayed and control returns to the main menu.
 def get_from_file(fName):
     strArray = []
     try:
@@ -301,6 +329,7 @@ def get_from_file(fName):
     return strArray
 
 
+# Output to file wrapper.
 def write_to_file(fName, outString):
     with open(fName, 'w') as f:
         f.write(outString)
@@ -312,18 +341,6 @@ def write_to_file(fName, outString):
 def display_results(report):
     print(report)
     return None
-
-
-################ DEBUG CODE ##################
-# This isn't part of the assignment but I left it in for others to reference.
-#   I'm using it to populate the user input lists and bypass the need for me
-#   to input data, but still able to evaluate the results of the program.
-def generate_numbers(rMin=1, rMax=999, xNums=12):
-    from random import sample
-    # Uses the sample function from the random module to generate a list of
-    #   integers.  The range function is used with the min and max variables
-    #   to set the possible integer values generated.
-    return sample(range(rMin, rMax), xNums)
 
 
 # Call main.
